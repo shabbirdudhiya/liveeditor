@@ -1,79 +1,81 @@
-import React, { useEffect, useState } from "react";
-import ModeratorCard from "../components/ModeratorCard";
-import io from "socket.io-client";
+import React, { useEffect } from "react";
 
-const Moderator = () => {
-  const [messages, setMessages] = useState([]);
-  const socket = io("http://localhost:9000"); // Replace with your server URL
-
+function ModeratorCard({ editorId, messages, socket, setMessages }) {
   useEffect(() => {
-    // Listen for incoming textUploaded events from the server
-    socket.on("textUploaded", (data) => {
-      setMessages((prevMessages) => [...prevMessages, data]);
+    if (!socket) return;
+
+    // Add event listener for "updateUploadStatus" event
+    socket.on("updateUploadStatus", (data) => {
+      const { entryId, isLive } = data;
+
+      // Update the messages state with the updated isLive status
+      setMessages((prevMessages) =>
+        prevMessages.map((message) =>
+          message._id === entryId ? { ...message, isLive } : message
+        )
+      );
     });
 
+    // Clean up the event listener when unmounting
     return () => {
-      // Clean up the event listener when the component unmounts
-      socket.off("textUploaded");
+      socket.off("updateUploadStatus");
     };
-  }, []);
+  }, [socket]);
 
-  const handleUpload = (editorId, text) => {
-    socket.emit("textUpload", { editorId, text });
+  const handleUploadClick = (entryId) => {
+    if (socket) {
+      // Update the upload status in the database
+      socket.emit("updateUploadStatus", {
+        entryId,
+        uploadStatus: "Uploaded",
+        isLive: true,
+      });
+    }
   };
-
-  const handleStatusChange = (entryId) => {
-    // Update the status of the entry in the database
-    // You can implement this using an API call or any other method to update the entry status
-
-    // For demonstration purposes, let's update the status locally
-    setMessages((prevMessages) =>
-      prevMessages.map((message) => {
-        if (message._id === entryId) {
-          return {
-            ...message,
-            uploadStatus: "Uploaded",
-          };
-        }
-        return message;
-      })
-    );
+  const formatDateTime = (datetime) => {
+    const date = new Date(datetime);
+    return date.toLocaleTimeString();
   };
-
   return (
-    <>
-      <h3 className="text-center">Moderator Dashboard</h3>
-      <div className="container-fluid row my-2">
-        <ModeratorCard
-          editorId={1}
-          messages={messages.filter(
-            (message) =>
-              message.editorId === 1 && message.uploadStatus === "Not Uploaded"
+    <div className="col-md-4">
+      <div className="card">
+        <div className="card-header">
+          <h2>Editor {editorId}</h2>
+        </div>
+        <div className="card-body">
+          {messages.length === 0 ? (
+            <p>No results found</p>
+          ) : (
+            <ul className="list-group list-group-flush">
+              {messages.map((message) => (
+                <li className="list-group-item message" key={message._id}>
+                  <small>{formatDateTime(message.datetime)}:</small>{" "}
+                  <strong>{message.text}</strong>
+                  <button
+                    className={`btn btn-sm mx-1 my-1 ${
+                      message.uploadStatus === "Uploaded" && message.isLive
+                        ? "btn-success"
+                        : message.uploadStatus === "Uploaded" && !message.isLive
+                        ? "btn-info"
+                        : "btn-danger"
+                    }`}
+                    onClick={() => handleUploadClick(message._id)}
+                    disabled={message.uploadStatus === "Uploaded"}
+                  >
+                    {message.uploadStatus === "Uploaded" && message.isLive
+                      ? "Live"
+                      : message.uploadStatus === "Uploaded" && !message.isLive
+                      ? "Uploaded"
+                      : "Upload"}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
-          handleUpload={handleUpload}
-          handleStatusChange={handleStatusChange}
-        />
-        <ModeratorCard
-          editorId={2}
-          messages={messages.filter(
-            (message) =>
-              message.editorId === 2 && message.uploadStatus === "Not Uploaded"
-          )}
-          handleUpload={handleUpload}
-          handleStatusChange={handleStatusChange}
-        />
-        <ModeratorCard
-          editorId={3}
-          messages={messages.filter(
-            (message) =>
-              message.editorId === 3 && message.uploadStatus === "Not Uploaded"
-          )}
-          handleUpload={handleUpload}
-          handleStatusChange={handleStatusChange}
-        />
+        </div>
       </div>
-    </>
+    </div>
   );
-};
+}
 
-export default Moderator;
+export default ModeratorCard;

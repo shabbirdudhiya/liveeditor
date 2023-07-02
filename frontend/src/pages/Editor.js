@@ -49,6 +49,7 @@ const Editor = ({ editorId }) => {
             onKeyDown={handleKeyPress}
             disabled={isDisabled}
             placeholder="Type your Sentence..."
+            autoFocus="true"
           />
           <button
             className="btn btn-primary chat-button"

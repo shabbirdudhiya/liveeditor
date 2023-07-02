@@ -17,6 +17,14 @@ const entrySchema = new mongoose.Schema({
     type: String,
     default: "Not Uploaded",
   },
+  isLive: {
+    type: Boolean,
+    default: false,
+  },
+  translatedTexts: {
+    type: Object,
+    default: {},
+  },
 });
 
 const Entry = mongoose.model("Entry", entrySchema);
