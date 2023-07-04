@@ -7,17 +7,6 @@ const Moderator = () => {
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
 
-  const fetchUpdatedEntries = async () => {
-    try {
-      // Fetch the updated entries from the server
-      const response = await fetch("/api/entries");
-      const data = await response.json();
-      return data.entries;
-    } catch (err) {
-      throw new Error("Failed to fetch updated entries: " + err.message);
-    }
-  };
-
   useEffect(() => {
     // Establish the socket connection
     const socket = io("http://localhost:9000"); // Replace with your server URL
@@ -36,12 +25,12 @@ const Moderator = () => {
     if (!socket) return;
 
     socket.on("initialEntries", (entries) => {
-      console.log("Received initialEntries:", entries);
+      // console.log("Received initialEntries:", entries);
       setMessages(entries);
     });
 
     socket.on("textUploaded", (data) => {
-      console.log("Received textUploaded event:", data);
+      // console.log("Received textUploaded event:", data);
 
       // Update the messages state with the new data
       setMessages((messages) => [...messages, data]);
@@ -50,44 +39,6 @@ const Moderator = () => {
     // Clean up the event listener when unmounting
     return () => {
       socket.off("textUploaded");
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    // Add event listener for "updateUploadStatus" event
-    if (!socket) return;
-    socket.on("updateUploadStatus", async (data) => {
-      console.log("Received updateUploadStatus event:", data);
-
-      // Fetch the updated entries from the database
-      try {
-        const updatedEntries = await fetchUpdatedEntries(); // function to fetch the updated entries from the database
-
-        // Update the messages state with the updated data
-        setMessages((messages) =>
-          messages.map((message) => {
-            const updatedEntry = updatedEntries.find(
-              (entry) => entry._id === message._id
-            );
-            if (updatedEntry) {
-              return {
-                ...message,
-                uploadStatus: updatedEntry.uploadStatus,
-                isLive: updatedEntry.isLive,
-              };
-            } else {
-              return message;
-            }
-          })
-        );
-      } catch (err) {
-        console.error("Failed to fetch updated entries:", err);
-      }
-    });
-
-    // Clean up the event listener when unmounting
-    return () => {
-      socket.off("updateUploadStatus");
     };
   }, [socket]);
 
@@ -104,19 +55,19 @@ const Moderator = () => {
           editorId={1}
           messages={filteredMessages(1)}
           socket={socket}
-          setMessag={setMessages}
+          setMessages={setMessages}
         />
         <ModeratorCard
           editorId={2}
           messages={filteredMessages(2)}
           socket={socket}
-          setMessag={setMessages}
+          setMessages={setMessages}
         />
         <ModeratorCard
           editorId={3}
           messages={filteredMessages(3)}
           socket={socket}
-          setMessag={setMessages}
+          setMessages={setMessages}
         />
       </div>
     </>

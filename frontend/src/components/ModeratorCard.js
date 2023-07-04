@@ -3,41 +3,46 @@ import React, { useEffect } from "react";
 function ModeratorCard({ editorId, messages, socket, setMessages }) {
   useEffect(() => {
     if (!socket) return;
-
-    // Add event listener for "updateUploadStatus" event
-    socket.on("updateUploadStatus", (data) => {
-      const { entryId, isLive } = data;
-
-      // Update the messages state with the updated isLive status
-      setMessages((prevMessages) =>
-        prevMessages.map((message) =>
-          message._id === entryId ? { ...message, isLive } : message
-        )
-      );
+    // Listen for the server's response
+    socket.on("uploadStatusUpdated", (response) => {
+      // Check if the response is successful
+      if (response.success) {
+        // Update the local state with the updated upload status and isLive values
+        setMessages((messages) =>
+          messages.map((message) =>
+            message._id === response.entryId
+              ? { ...message, uploadStatus: "Uploaded", isLive: true }
+              : { ...message, isLive: false }
+          )
+        );
+      } else {
+        // Handle the error case, such as displaying an error message
+        console.error("Failed to update upload status:", response.error);
+      }
     });
 
     // Clean up the event listener when unmounting
     return () => {
-      socket.off("updateUploadStatus");
+      socket.off("uploadStatusUpdated");
     };
-  }, [socket]);
+  }, [socket, setMessages]);
 
   const handleUploadClick = (entryId) => {
-    if (socket) {
-      // Update the upload status in the database
-      socket.emit("updateUploadStatus", {
-        entryId,
-        uploadStatus: "Uploaded",
-        isLive: true,
-      });
-    }
+    if (!socket) return;
+    // Update the upload status in the database
+    socket.emit("updateUploadStatus", {
+      entryId,
+      uploadStatus: "Uploaded",
+      isLive: true,
+    });
   };
   const formatDateTime = (datetime) => {
     const date = new Date(datetime);
     return date.toLocaleTimeString();
   };
+
   return (
-    <div className="col-md-4">
+    <div className="col-md-4 my-1">
       <div className="card">
         <div className="card-header">
           <h2>Editor {editorId}</h2>

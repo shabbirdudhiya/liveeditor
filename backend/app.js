@@ -65,6 +65,7 @@ io.on("connection", async (socket) => {
   });
 
   // Change Entry Status
+
   socket.on("updateUploadStatus", async ({ entryId, uploadStatus, isLive }) => {
     try {
       // Find the entry in the database based on the provided entryId
@@ -75,39 +76,58 @@ io.on("connection", async (socket) => {
         return;
       }
 
-      // Update the upload status of the entry
-      entry.uploadStatus = uploadStatus;
-      entry.isLive = isLive;
-
-      // Perform translation if isLive is true
-
-      if (isLive) {
-        const translationMap = await translateInMultipleLanguages(
-          entry.text,
-          targetLanguages
-        );
-
-        entry.translatedTexts = translationMap;
-      }
-
-      // save the entry
-      await entry.save();
-
-      // Update the isLive status of all other entries to false
-      await Entry.updateMany(
-        { _id: { $ne: entryId } },
-        { $set: { isLive: false } }
+      // Perform translation
+      const translationMap = await translateInMultipleLanguages(
+        entry.text,
+        targetLanguages
       );
 
-      io.emit("updateUploadStatus", {
-        entryId,
-        uploadStatus,
-        isLive,
-      });
+      // Check if the translation was successful
+      const isTranslationSuccessful = Object.keys(translationMap).length > 0;
+      // const isTranslationSuccessful = Object.values(translationMap).some(
+      //   (value) => value && value.trim() !== ""
+      // );
 
-      console.log(`UploadStatus and isLive updated for entry ID: ${entryId}`);
+      if (isTranslationSuccessful) {
+        // Update the upload status of the entry
+        entry.uploadStatus = uploadStatus;
+        entry.isLive = isLive;
+
+        // Save the translated texts in the entry
+        entry.translatedTexts = translationMap;
+
+        // Update the upload status of the entry
+        entry.uploadStatus = uploadStatus;
+        entry.isLive = isLive;
+
+        // Save the entry
+        await entry.save();
+
+        // Update the isLive status of all other entries to false
+        await Entry.updateMany(
+          { _id: { $ne: entryId } },
+          { $set: { isLive: false } }
+        );
+
+        io.emit("uploadStatusUpdated", {
+          entryId,
+          uploadStatus,
+          isLive,
+          success: true,
+        });
+        console.log(`UploadStatus and isLive updated for entry ID: ${entryId}`);
+      } else {
+        console.log("Translation failed");
+        return;
+      }
     } catch (err) {
       console.error("Failed to update uploadStatus & isLive:", err);
+
+      // Emit the uploadStatusUpdated event with an error response
+      socket.emit("uploadStatusUpdated", {
+        success: false,
+        error: err.message,
+      });
     }
   });
 
@@ -137,7 +157,7 @@ async function translateSentence(sentence, targetLanguage) {
     const [response] = await translationClient.translateText(request);
 
     const translatedText = response.translations[0].translatedText;
-    console.log(`Translation (${targetLanguage}): ${translatedText}`);
+    // console.log(`Translation (${targetLanguage}): ${translatedText}`);
     return translatedText;
     // for (const translation of response.translations) {
     //   console.log(
@@ -166,7 +186,16 @@ async function translateInMultipleLanguages(sentence, targetLanguages) {
   return translationMap;
 }
 
-// translateInMultipleLanguages(sentence, targetLanguages);
+// Routes
+router.get("api/live-entry", async (req, res) => {
+  try {
+    const liveEntry = await Entry.findOne({ isLive: true }).exec();
+    res.json(liveEntry);
+  } catch (error) {
+    console.error("Error fetching live entry:", error);
+    res.status(500).json({ error: "Failed to fetch live entry" });
+  }
+});
 
 // Mount the router
 app.use(router);

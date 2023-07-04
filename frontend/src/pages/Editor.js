@@ -39,28 +39,31 @@ const Editor = ({ editorId }) => {
   };
 
   return (
-    <div className="chat-editor">
-      <div className="chat-container">
-        <div className="chat-input-wrapper">
-          <textarea
-            className="form-control chat-input"
-            value={text}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyPress}
-            disabled={isDisabled}
-            placeholder="Type your Sentence..."
-            autoFocus="true"
-          />
-          <button
-            className="btn btn-primary chat-button"
-            disabled={isDisabled}
-            onClick={handleUpload}
-          >
-            {isUploading ? <FaSpinner /> : <FaPaperPlane />}
-          </button>
+    <>
+      <h3 className="text-center my-2">Editor: {editorId}</h3>
+      <div className="chat-editor">
+        <div className="chat-container">
+          <div className="chat-input-wrapper">
+            <textarea
+              className="form-control chat-input"
+              value={text}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyPress}
+              disabled={isDisabled}
+              placeholder="Type your Sentence..."
+              autoFocus="true"
+            />
+            <button
+              className="btn btn-primary chat-button"
+              disabled={isDisabled}
+              onClick={handleUpload}
+            >
+              {isUploading ? <FaSpinner /> : <FaPaperPlane />}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
