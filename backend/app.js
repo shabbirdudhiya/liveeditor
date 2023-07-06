@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
-const router = express.Router();
 const cors = require("cors");
-const { TranslationServiceClient } = require("@google-cloud/translate");
+
+const { Translate } = require("@google-cloud/translate").v2;
 
 const socketIO = require("socket.io");
 const Entry = require("./models/Entry");
@@ -65,7 +65,6 @@ io.on("connection", async (socket) => {
   });
 
   // Change Entry Status
-
   socket.on("updateUploadStatus", async ({ entryId, uploadStatus, isLive }) => {
     try {
       // Find the entry in the database based on the provided entryId
@@ -81,7 +80,6 @@ io.on("connection", async (socket) => {
         entry.text,
         targetLanguages
       );
-
       // Check if the translation was successful
       const isTranslationSuccessful = Object.keys(translationMap).length > 0;
       // const isTranslationSuccessful = Object.values(translationMap).some(
@@ -139,32 +137,18 @@ io.on("connection", async (socket) => {
 
 // TRANSLATION API ---------------------
 
-// Instantiates a client
-const translationClient = new TranslationServiceClient();
-const projectId = "prefab-clover-391412";
-const location = "global";
+// Your credentials
+const CREDENTIALS = require("./prefab-clover-391412-fcd619ce69af.json");
+
+const translate = new Translate({
+  credentials: CREDENTIALS,
+  projectId: CREDENTIALS.project_id,
+});
 
 async function translateSentence(sentence, targetLanguage) {
   try {
-    const request = {
-      parent: `projects/${projectId}/locations/${location}`,
-      contents: [sentence],
-      mimeType: "text/plain",
-      sourceLanguageCode: "en",
-      targetLanguageCode: targetLanguage,
-    };
-
-    const [response] = await translationClient.translateText(request);
-
-    const translatedText = response.translations[0].translatedText;
-
-    // console.log(`Translation (${targetLanguage}): ${translatedText}`);
-    // for (const translation of response.translations) {
-    //   console.log(
-    //     `Translation (${targetLanguage}): ${translation.translatedText}`
-    //   );
-    // }
-    return translatedText;
+    let [response] = await translate.translate(sentence, targetLanguage);
+    return response;
   } catch (error) {
     console.error(`Translation (${targetLanguage}) failed: ${error}`);
     return "";
@@ -213,6 +197,3 @@ app.get("/api/live", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch live entry." });
   }
 });
-
-// Mount the router
-// app.use(router);
