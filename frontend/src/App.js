@@ -12,6 +12,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/moderator" element={<Moderator />} />
         <Route path="/viewer/fr" element={<Viewer languageCode={"fr"} />} />
+        <Route path="/viewer/it" element={<Viewer languageCode={"it"} />} />
         <Route path="/editor/1" element={<Editor editorId={1} />} />
         <Route path="/editor/2" element={<Editor editorId={2} />} />
         <Route path="/editor/3" element={<Editor editorId={3} />} />

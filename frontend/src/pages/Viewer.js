@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
+import axios from "axios";
 
 const Viewer = ({ languageCode }) => {
   const [liveEntry, setLiveEntry] = useState(null);
@@ -7,9 +8,32 @@ const Viewer = ({ languageCode }) => {
 
   useEffect(() => {
     // Establish the socket connection
-    const socket = io("http://localhost:9000"); // Replace with your server URL
+    const socket = io("http://localhost:9000"); // server URL
     // Set the socket instance to state
     setSocket(socket);
+
+    // Fetch the initial live entry on component mount
+    const fetchLiveEntry = async () => {
+      try {
+        const response = await axios.get("http://localhost:9000/api/live");
+        if (response.status === 200) {
+          const entry = response.data;
+          if (entry && entry.isLive) {
+            setLiveEntry(entry);
+          } else {
+            setLiveEntry("No Results Found.");
+          }
+          console.log(entry);
+        } else {
+          console.error("Failed to fetch live entry.");
+        }
+      } catch (error) {
+        console.error("Error fetching live entry:", error);
+      }
+    };
+
+    fetchLiveEntry();
+
     // Clean up the socket connection when unmounting
     return () => {
       socket.disconnect();
@@ -19,30 +43,11 @@ const Viewer = ({ languageCode }) => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("updateUploadStatus", async (response) => {
-      try {
-        if (response.success) {
-          setLiveEntry(response.translatedTexts["fr"]);
-        } else {
-          // Handle the error case, such as displaying an error message
-          console.error("Failed to update upload status:", response.error);
-        }
-      } catch (error) {}
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socket, setLiveEntry]);
-
-  useEffect(() => {
-    const socket = io("http://localhost:9000");
-
     socket.on("updateUploadStatus", async () => {
       try {
-        const response = await fetch("/api/live-entry");
-        if (response.ok) {
-          const entry = await response.json();
+        const response = await axios.get("/api/live-entry");
+        if (response.status === 200) {
+          const entry = response.data;
           if (entry && entry.isLive) {
             setLiveEntry(entry);
           } else {
@@ -55,26 +60,24 @@ const Viewer = ({ languageCode }) => {
         console.error("Error fetching live entry:", error);
       }
     });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  }, [socket]);
 
   return (
-    <div
-      className="viewer-page"
-      style={{ backgroundColor: "black", color: "white" }}
-    >
-      <h1>Viewer Page</h1>
+    <div className="viewer-page">
       {liveEntry && languageCode in liveEntry.translatedTexts ? (
         <div
           className="live-entry"
           style={{
-            fontSize:
-              liveEntry.translatedTexts[languageCode].length > 50
-                ? "24px"
-                : "32px",
+            fontSize: `min(10vw, 10vh)`,
+            textAlign: "center",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            backgroundColor: "black",
+            color: "white",
+            padding: "2rem",
+            textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
           }}
         >
           {liveEntry.translatedTexts[languageCode]}

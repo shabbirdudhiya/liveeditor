@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 
 const PORT = process.env.PORT || 9000;
 
-const targetLanguages = ["fr", "es", "de", "it", "ja", "ko", "pt"]; // for translation
+const targetLanguages = ["en", "fr", "id"]; // for translation
 
 // MongoDB Connection
 mongoose.connect("mongodb://127.0.0.1:27017/liveeditor", {
@@ -157,13 +157,14 @@ async function translateSentence(sentence, targetLanguage) {
     const [response] = await translationClient.translateText(request);
 
     const translatedText = response.translations[0].translatedText;
+
     // console.log(`Translation (${targetLanguage}): ${translatedText}`);
-    return translatedText;
     // for (const translation of response.translations) {
     //   console.log(
     //     `Translation (${targetLanguage}): ${translation.translatedText}`
     //   );
     // }
+    return translatedText;
   } catch (error) {
     console.error(`Translation (${targetLanguage}) failed: ${error}`);
     return "";
@@ -171,11 +172,16 @@ async function translateSentence(sentence, targetLanguage) {
 }
 
 async function translateInMultipleLanguages(sentence, targetLanguages) {
-  const translationPromises = targetLanguages.map((targetLanguage) =>
-    translateSentence(sentence, targetLanguage)
-  );
-  // await Promise.all(translationPromises);
-
+  const translationPromises = targetLanguages.map(async (targetLanguage) => {
+    if (targetLanguage === "en") {
+      // If the target language is English, use the input sentence as the translation
+      return sentence;
+    } else {
+      // Perform translation for non-English target languages
+      const translatedText = await translateSentence(sentence, targetLanguage);
+      return translatedText;
+    }
+  });
   const translations = await Promise.all(translationPromises);
 
   const translationMap = targetLanguages.reduce((map, language, index) => {
@@ -187,15 +193,26 @@ async function translateInMultipleLanguages(sentence, targetLanguages) {
 }
 
 // Routes
-router.get("api/live-entry", async (req, res) => {
+
+// TODO: uncomment the date line to get today's entries only
+app.get("/api/live", async (req, res) => {
   try {
-    const liveEntry = await Entry.findOne({ isLive: true }).exec();
-    res.json(liveEntry);
+    const currentDate = new Date().toISOString().split("T")[0];
+    const liveEntry = await Entry.findOne({
+      isLive: true,
+      // "datetime.$date": { $gte: new Date(currentDate) },
+    }).exec();
+
+    if (liveEntry) {
+      res.json(liveEntry);
+    } else {
+      res.status(404).json({ error: "No live entry found." });
+    }
   } catch (error) {
     console.error("Error fetching live entry:", error);
-    res.status(500).json({ error: "Failed to fetch live entry" });
+    res.status(500).json({ error: "Failed to fetch live entry." });
   }
 });
 
 // Mount the router
-app.use(router);
+// app.use(router);
