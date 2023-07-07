@@ -35,8 +35,8 @@ const server = app.listen(PORT, () => {
 
 const io = socketIO(server, {
   cors: {
-    // origin: "http://localhost:3000", // the URL of  frontend application
-    origin: "https://main--liveeditor.netlify.app/", // the URL of  frontend application
+    origin: "http://localhost:3000", // the URL of  frontend application
+    // origin: "https://main--liveeditor.netlify.app/", // the URL of  frontend application
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"], // Add any additional headers require
   },
