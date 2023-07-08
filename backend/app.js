@@ -13,10 +13,10 @@ const PORT = process.env.PORT || 9000;
 const targetLanguages = ["en", "fr", "id"]; // for translation
 
 // MongoDB Connection
+// mongoose.connect(
+//   "mongodb://127.0.0.1:27017/liveeditor",
 mongoose.connect(
-  "mongodb://127.0.0.1:27017/liveeditor",
-  // mongoose.connect(
-  // "mongodb+srv://liveeditor-database:PlmQaz963741$@liveeditor.op5hnx6.mongodb.net/?retryWrites=true&w=majority",
+  "mongodb+srv://liveeditor-database:PlmQaz963741$@liveeditor.op5hnx6.mongodb.net/?retryWrites=true&w=majority",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -36,8 +36,8 @@ const server = app.listen(PORT, () => {
 
 const io = socketIO(server, {
   cors: {
-    origin: "http://localhost:3000", // the URL of  frontend application
-    // origin: "https://main--liveeditor.netlify.app", // the URL of  frontend application
+    // origin: "http://localhost:3000", // the URL of  frontend application
+    origin: "https://main--liveeditor.netlify.app", // the URL of  frontend application
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"], // Add any additional headers require
   },
