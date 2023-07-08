@@ -10,10 +10,8 @@ const Moderator = () => {
   useEffect(() => {
     // Establish the socket connection
     const socket = io("http://localhost:9000"); // Replace with your server URL
-
     // Set the socket instance to state
     setSocket(socket);
-
     // Clean up the socket connection when unmounting
     return () => {
       socket.disconnect();
@@ -31,7 +29,6 @@ const Moderator = () => {
 
     socket.on("textUploaded", (data) => {
       // console.log("Received textUploaded event:", data);
-
       // Update the messages state with the new data
       setMessages((messages) => [...messages, data]);
     });
