@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
 
 import ModeratorCard from "../components/ModeratorCard";
+import Sidebar from "../components/Navbar";
 
 const Moderator = () => {
   const [messages, setMessages] = useState([]);
@@ -46,8 +47,8 @@ const Moderator = () => {
 
   return (
     <>
-      <h3 className="text-center">Moderator Dashboard</h3>
-      <div className="container-fluid row my-2">
+      <Sidebar />
+      <div className="flex flex-wrap py-2">
         <ModeratorCard
           editorId={1}
           messages={filteredMessages(1)}
@@ -60,8 +61,16 @@ const Moderator = () => {
           socket={socket}
           setMessages={setMessages}
         />
+      </div>
+      <div className="flex flex-wrap">
         <ModeratorCard
           editorId={3}
+          messages={filteredMessages(3)}
+          socket={socket}
+          setMessages={setMessages}
+        />
+        <ModeratorCard
+          editorId={4}
           messages={filteredMessages(3)}
           socket={socket}
           setMessages={setMessages}
